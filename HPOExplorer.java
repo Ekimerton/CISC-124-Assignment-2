@@ -1,22 +1,37 @@
 import java.io.*;
 import java.util.HashMap;
+import java.util.ArrayList;
 public class HPOExplorer {
 
-  public static final int ITEM_COUNT = 13941;
+  //For ease of reading, an extra empty line is added at the end of HPO.txt, and the new file is called HPO2.txt. Everything else is the same.
+  public static File HPO = new File("HPO2.txt");
+  public static File queries = new File("queries.txt");
 
-  public static File HPO = new File("HPO.txt");
+  public static final int ITEM_COUNT = 13941; //The count of total entries
+  public static final int OBSOLETE_COUNT = 216; //The count of obsolete entries
+  public static final int VALID_ITEM_COUNT = ITEM_COUNT - OBSOLETE_COUNT; //The count of entries, not obsolete
 
-  public static HashMap<Integer, Item> entryMap = new HashMap<Integer, Item>();
+  public static int[] ids = new int[VALID_ITEM_COUNT]; //Stores all the entries of valid entries (not obsolete)
+  public static HashMap<Integer, Item> entryMap = new HashMap<Integer, Item>(); //Hashmap of entries for easy access
 
   public static void main (String[] args) {
+    System.out.println();
     parseHPO(HPO);
     establishConnections(HPO);
-    System.out.println(entryMap.get(1));
-    System.out.print(entryMap.get(3000067));
+    Item root = entryMap.get(1);
+    root.setDepths();
+
+    Item deepestEntry = findLargestDepth();
+    System.out.println(deepestEntry.getDepth());
+    System.out.println(deepestEntry.toStringMaxPath());
+    //Query.readQueries(queries);
   }
 
   /*
   This method parses the txt file, and puts the entries into an Item object. The objects go into a HashMap.
+
+  The is_a (the children), are not connected yet, as they might not have been declared yet. Instead, their IDs are
+  stored, and the connections are made afterwards.
   */
   public static void parseHPO (File file) {
     try{
@@ -27,54 +42,61 @@ public class HPOExplorer {
         br.readLine();
       }
 
+      int count = 0;
       for(int i = 0; i < ITEM_COUNT; i++){
-        String line = br.readLine().trim();
-        line = br.readLine().trim();
-
-        int id = Integer.parseInt(line.substring(line.indexOf("HP:") + 3, line.length()));
-        Item entry = new Item(id);
+        String line = br.readLine().trim(); //Gets rid of the space at the top.
+        String fullEntry = "";
         while(!line.isEmpty()){
           line = br.readLine().trim();
-          if(line.indexOf("is_a") == -1){
-            entry.addContent(line);
-          }
+          fullEntry = fullEntry + "\n" + line;
         }
-        entryMap.put(entry.getId(), entry);
+        fullEntry = fullEntry.substring(fullEntry.indexOf("id:"));
+        //At this point, the string fullEntry contains all the information within the Term, but without the whitespace and [Term] at the top.
+
+        if(fullEntry.indexOf("is_obsolete: true") == -1){
+          Item entry = new Item(fullEntry);
+          ids[count] = entry.getId();
+          count++;
+          entryMap.put(entry.getId(), entry); //Puts the entry in a hashmap where the Id is the key, for easy access.
+        }
       }
     } catch (Exception e){
-      System.out.println("Error in parsing into HashMap");
+      System.out.println("Error in parseHPO");
       System.out.println(e);
     }
   }
 
+  /*
+  Goes through the ids[] array, and looks at every valid entry. Then it goes through the entry's ArrayList of parentIds.
+  It then sets the parents according to the list of parentIds.
+  */
   public static void establishConnections(File file){
-    try{
-      BufferedReader br = new BufferedReader(new FileReader(file));
-
-      //Gets rid of the information at the top.
-      for(int i = 0; i < 29; i++){
-        br.readLine();
-      }
-
-      for(int i = 0; i < ITEM_COUNT; i++){
-        String line = br.readLine().trim();
-        line = br.readLine().trim();
-
-        int id = Integer.parseInt(line.substring(line.indexOf("HP:") + 3, line.length()));
-        Item entry = new Item(id);
-        while(!line.isEmpty()){
-          if(line.indexOf("is_a:") != -1){
-            int childId = Integer.parseInt(line.substring(line.indexOf("HP:") + 3, line.indexOf(" !")));
-            Item child = entryMap.get(id);
-            Item parent = entryMap.get(childId);
-            parent.addChild(child);
-          }
-          line = br.readLine().trim();
+    for(int i = 0; i < VALID_ITEM_COUNT; i++){
+      Item entry = entryMap.get(ids[i]);
+      if(entry.parentsIds.size() > 0) {
+        for(int j = 0; j < entry.parentsIds.size(); j++){
+          Item is_a = entryMap.get(entry.parentsIds.get(j));
+          entry.addParent(is_a);
+          is_a.addChild(entry);
         }
       }
-    } catch (Exception e){
-      System.out.println("Error in establishing connections");
-      System.out.println(e);
     }
+  }
+
+  /*
+  Goes through the ids[] array of all valid entry ids, and returns the entry with the largest depth.
+  */
+  public static Item findLargestDepth(){
+    Item maxEntry = entryMap.get(ids[0]);
+    int maxDepth = maxEntry.getDepth();
+    for(int i = 0; i < VALID_ITEM_COUNT; i++){
+      Item entry = entryMap.get(ids[i]);
+      int depth = entry.getDepth();
+      if(depth > maxDepth){
+        maxDepth = depth;
+        maxEntry = entry;
+      }
+    }
+    return maxEntry;
   }
 }
