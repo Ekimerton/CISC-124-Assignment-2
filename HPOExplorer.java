@@ -23,9 +23,9 @@ public class HPOExplorer {
   public static HashMap<Integer, Item> entryMap = new HashMap<Integer, Item>(); //Hashmap of entries for easy access
 
   public static void main (String[] args) {
-    System.out.println();
     parseHPO(HPO);
     establishConnections(HPO);
+    
     Item root = entryMap.get(1);
     root.setDepths();
 
