@@ -1,11 +1,19 @@
+/*
+Name: Ekim Karabey
+NetId: 18ebk
+Student Number: 20121769
+Date: 19/02/2019
+*/
+
 import java.io.*;
 import java.util.HashMap;
 import java.util.ArrayList;
 public class HPOExplorer {
 
-  //For ease of reading, an extra empty line is added at the end of HPO.txt, and the new file is called HPO2.txt. Everything else is the same.
-  public static File HPO = new File("HPO2.txt");
+  public static File HPO = new File("HPO.txt");
   public static File queries = new File("queries.txt");
+  public static File answers = new File("answers.txt");
+  public static File maxPath = new File("maxpath.txt");
 
   public static final int ITEM_COUNT = 13941; //The count of total entries
   public static final int OBSOLETE_COUNT = 216; //The count of obsolete entries
@@ -21,10 +29,8 @@ public class HPOExplorer {
     Item root = entryMap.get(1);
     root.setDepths();
 
-    Item deepestEntry = findLargestDepth();
-    System.out.println(deepestEntry.getDepth());
-    System.out.println(deepestEntry.toStringMaxPath());
-    //Query.readQueries(queries);
+    Query.readQueries(queries, answers);
+    Query.writeMaxPath(maxPath);
   }
 
   /*
@@ -33,21 +39,21 @@ public class HPOExplorer {
   The is_a (the children), are not connected yet, as they might not have been declared yet. Instead, their IDs are
   stored, and the connections are made afterwards.
   */
-  public static void parseHPO (File file) {
+  public static void parseHPO (File readFile) {
     try{
-      BufferedReader br = new BufferedReader(new FileReader(file));
+      BufferedReader reader = new BufferedReader(new FileReader(readFile));
 
       //Gets rid of the information at the top.
       for(int i = 0; i < 29; i++){
-        br.readLine();
+        reader.readLine();
       }
 
       int count = 0;
       for(int i = 0; i < ITEM_COUNT; i++){
-        String line = br.readLine().trim(); //Gets rid of the space at the top.
+        String line = reader.readLine().trim(); //Gets rid of the space at the top.
         String fullEntry = "";
         while(!line.isEmpty()){
-          line = br.readLine().trim();
+          line = reader.readLine().trim();
           fullEntry = fullEntry + "\n" + line;
         }
         fullEntry = fullEntry.substring(fullEntry.indexOf("id:"));

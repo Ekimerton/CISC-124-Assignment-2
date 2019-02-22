@@ -1,3 +1,10 @@
+/*
+Name: Ekim Karabey
+NetId: 18ebk
+Student Number: 20121769
+Date: 19/02/2019
+*/
+
 import java.util.*;
 
 public class Item {
@@ -9,6 +16,10 @@ public class Item {
   List<Item> children = null;
   List<Item> parents = null;
 
+  /*
+  Nothing interesting about this constuctor, just takes in the string of the entry, and parses it to find the id, and
+  the parentsIds. Anything not yet set (depth children and parents) are left blank or assigned an impossible value.
+  */
   public Item(String fullEntry){
     id = Integer.parseInt(fullEntry.substring(fullEntry.indexOf("id: HP:") + 7, fullEntry.indexOf("id: HP:") + 14));
     depth = -1;
@@ -97,7 +108,9 @@ public class Item {
   }
 
   /*
-  This method is only used for printing the maxpath.txt file, since the current print takes the route of the first parent, instead of the "deepest" parent.
+  This method is only used for printing the maxpath.txt file, since the current print takes the route of the first
+  parent, instead of the "deepest" parent. This method instead follows the deepest parent, whose depth should be the
+  depth of the child -1.
   */
   public String toStringMaxPath(){
     String parentsInfo = "";
@@ -118,6 +131,10 @@ public class Item {
     return(this.contents + parentsInfo);
   }
 
+  /*
+  This is the default string converter, and just takes the item, and follows it up to the root, using the first parent
+  if there are more than one.
+  */
   public String toString(){
     String parentsInfo = "";
     if(parents.size() == 0){
@@ -125,7 +142,7 @@ public class Item {
     }
 
     /*
-    This chunk of code follows each parent path to the root node, which means there is more "clutter". This was a part 
+    This chunk of code follows each parent path to the root node, which means there is more "clutter". This was a part
     of my toString method before the assignment clarification.
 
     for(int i = 0; i < parents.size(); i++){
